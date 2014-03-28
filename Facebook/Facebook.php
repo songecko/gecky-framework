@@ -14,7 +14,7 @@ class Facebook extends \Facebook
 		
 		//Tomo el access token desde el redirect de facebook
 		$access_token = isset($_SESSION['fb_access_token'])?$_SESSION['fb_access_token']:null;
-		if ($code = isset($_REQUEST["code"])?$_REQUEST["code"]:false)
+		if (!$access_token && $code = isset($_REQUEST["code"])?$_REQUEST["code"]:false)
 		{
 			$token_url="https://graph.facebook.com/oauth/access_token?client_id=".$this->getAppId()."&redirect_uri=" . urlencode($this->getAppHost())
 			. "&client_secret=".$this->getAppSecret()."&code=" . $code . "&display=popup";
@@ -39,7 +39,7 @@ class Facebook extends \Facebook
 	public function getConfiguredLoginUrl()
 	{
 		return $this->getLoginUrl(array(
-			'scope' => 'publish_stream',
+			'scope' => 'basic_info, email, user_birthday, publish_actions',
 			'redirect_uri' => $this->appHost
 		));
 	}

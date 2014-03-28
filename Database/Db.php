@@ -2,32 +2,36 @@
 
 namespace Gecky\Database;
 
+use Doctrine\DBAL\Configuration;
+use Doctrine\DBAL\DriverManager;
+
 class Db {
 	
 	protected $config;
-	protected $connection;
+	private $connection;
 	
 	public function __construct($config)
 	{
 		$this->config = $config;
+	}
+	
+	/**
+	 * @return Doctrine\DBAL\Connection
+	 */
+	public function getConnection()
+	{
+		if(!$this->connection)
+		{
+			$this->connection = DriverManager::getConnection(array(
+				'dbname' => $this->config['database'],
+				'user' => $this->config['username'],
+				'password' => $this->config['password'],
+				'host' => $this->config['host'],
+				'driver' => 'pdo_mysql',
+				'charset' => 'utf8'
+			)); 
+		}
 		
-		$this->connect();
-	}
-	
-	public function connect()
-	{
-		$this->connection = mysql_connect($this->config['host'], $this->config['username'], $this->config['password']);
-		mysql_select_db($this->config['database'], $this->connection);
-		mysql_query("SET NAMES 'utf8'");
-	}
-	
-	public function execute($query)
-	{
-		return mysql_query($query);	
-	}
-	
-	public function close()
-	{
-		mysql_close($this->connection);	
+		return $this->connection;
 	}
 }

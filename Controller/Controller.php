@@ -7,6 +7,8 @@ use Symfony\Component\Templating\PhpEngine;
 use Symfony\Component\Templating\TemplateNameParser;
 use Symfony\Component\Templating\Loader\FilesystemLoader;
 use Symfony\Component\DependencyInjection\ContainerAware;
+use Symfony\Component\Templating\Helper\AssetsHelper;
+use Symfony\Component\HttpFoundation\Request;
 
 class Controller extends ContainerAware
 {
@@ -15,15 +17,23 @@ class Controller extends ContainerAware
 	public function __construct()
 	{
 		$loader = new FilesystemLoader($this->getViewsDir());		
-		$this->templating = new PhpEngine(new TemplateNameParser(), $loader);		
+		$this->templating = new PhpEngine(new TemplateNameParser(), $loader);
+		
+		$request = Request::createFromGlobals();		
+		$this->templating->set(new AssetsHelper($request->getBasePath()));
 	}
 	
-	protected function render($name, array $parameters = array())
+	protected function render($name, array $parameters = array(), $layout = 'layout')
 	{
-		$view = $this->templating->render('layout.php', array(
+		$parameters = array_merge($parameters, array(
+				'container' => $this->container
+		));
+		
+		$view = $this->templating->render($layout.'.php', array(
 			'content' => $this->templating->render($name, $parameters),
 			'container' => $this->container 
 		));
+		
 		return new Response($view);
 	}
 	
