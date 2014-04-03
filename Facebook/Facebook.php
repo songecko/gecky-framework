@@ -14,14 +14,17 @@ class Facebook extends \Facebook
 		
 		//Tomo el access token desde el redirect de facebook
 		$access_token = isset($_SESSION['fb_access_token'])?$_SESSION['fb_access_token']:null;
-		if (!$access_token && $code = isset($_REQUEST["code"])?$_REQUEST["code"]:false)
+		if ($code = isset($_REQUEST["code"])?$_REQUEST["code"]:false)
 		{
 			$token_url="https://graph.facebook.com/oauth/access_token?client_id=".$this->getAppId()."&redirect_uri=" . urlencode($this->getAppHost())
 			. "&client_secret=".$this->getAppSecret()."&code=" . $code . "&display=popup";
-			$response = file_get_contents($token_url);
-			$params = null;
-			parse_str($response, $params);
-			$access_token = $_SESSION['fb_access_token'] =  $params['access_token'];
+			$response = @file_get_contents($token_url);
+			if($response)
+			{
+				$params = null;
+				parse_str($response, $params);
+				$access_token = $_SESSION['fb_access_token'] =  $params['access_token'];
+			}
 		}
 		$this->setAccessToken($access_token);
 	}
