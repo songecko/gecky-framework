@@ -6,11 +6,13 @@ class Facebook extends \Facebook
 {	
 	protected $appHost;
 	protected $tabUrl;
+	protected $loginScope;
 	
-	public function init($appHost, $tabUrl) 
+	public function init($appHost, $tabUrl, $loginScope = 'basic_info, email, user_birthday') 
 	{
 		$this->appHost = $appHost;
 		$this->tabUrl = $tabUrl;
+		$this->loginScope = $loginScope;
 		
 		//Tomo el access token desde el redirect de facebook
 		$access_token = isset($_SESSION['fb_access_token'])?$_SESSION['fb_access_token']:null;
@@ -42,7 +44,7 @@ class Facebook extends \Facebook
 	public function getConfiguredLoginUrl()
 	{
 		return $this->getLoginUrl(array(
-			'scope' => 'basic_info, email, user_birthday, publish_actions',
+			'scope' => $this->loginScope,
 			'redirect_uri' => $this->appHost
 		));
 	}
