@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerAware;
 use Symfony\Component\Templating\Helper\AssetsHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\Routing\Generator\UrlGenerator;
 
 class Controller extends ContainerAware
 {
@@ -43,9 +44,9 @@ class Controller extends ContainerAware
 		return new RedirectResponse($url);
 	}
 	
-	protected function generateUrl($routeName)
+	protected function generateUrl($routeName, $parameters = array(), $referenceType = UrlGenerator::ABSOLUTE_PATH)
 	{
-		return $this->container->get('routing.generator')->generate($routeName);
+		return $this->container->get('routing.generator')->generate($routeName, $parameters, $referenceType);
 	}
 	
 	protected function getViewsDir()
