@@ -3,11 +3,14 @@
 namespace Gecky;
 
 use Symfony\Component\HttpKernel\HttpKernel;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader as DIYamlLoader;
 use Symfony\Component\Routing\Loader\YamlFileLoader as RYamlLoader;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Session\Session;
  
 class Framework extends HttpKernel
 {
@@ -35,6 +38,15 @@ class Framework extends HttpKernel
 		$loader->load('services.yml');
 		
 		return parent::__construct($container->get('dispatcher'), $container->get('resolver'));
+	}
+	
+	public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+	{
+		$session = new Session();
+		$session->start();
+		$request->setSession($session);
+		
+		return parent::handle($request, $type, $catch);
 	}
 	
 }

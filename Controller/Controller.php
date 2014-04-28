@@ -11,6 +11,9 @@ use Symfony\Component\Templating\Helper\AssetsHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Routing\Generator\UrlGenerator;
+use Gecky\Helper\RouterHelper;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Gecky\Helper\RequestHelper;
 
 class Controller extends ContainerAware
 {
@@ -18,11 +21,27 @@ class Controller extends ContainerAware
 	
 	public function __construct()
 	{
-		$loader = new FilesystemLoader($this->getViewsDir());		
-		$this->templating = new PhpEngine(new TemplateNameParser(), $loader);
+		//Check if we need templating engine
+		if($viewsDir = $this->getViewsDir())
+		{
+			$loader = new FilesystemLoader($viewsDir);		
+			$this->templating = new PhpEngine(new TemplateNameParser(), $loader);
+			
+			$request = Request::createFromGlobals();		
+			$this->templating->set(new AssetsHelper($request->getBasePath()));
+			$this->templating->set(new RequestHelper($request));
+		}
+	}
+	
+	public function setContainer(ContainerInterface $container = null)
+	{
+		parent::setContainer($container);
 		
-		$request = Request::createFromGlobals();		
-		$this->templating->set(new AssetsHelper($request->getBasePath()));
+		if($viewsDir = $this->getViewsDir())
+		{
+			$request = Request::createFromGlobals();
+			$this->templating->set(new RouterHelper($this->container->get('routing.generator'), $this->container->get('matcher'), $request));
+		}
 	}
 	
 	protected function render($name, array $parameters = array(), $layout = 'layout')
@@ -51,6 +70,6 @@ class Controller extends ContainerAware
 	
 	protected function getViewsDir()
 	{
-		throw new \Exception("Must implement getViewsDir()");
+		//Must implement getViewsDir() to use the templating engine
 	}
 }
