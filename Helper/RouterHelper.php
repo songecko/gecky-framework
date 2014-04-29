@@ -44,15 +44,23 @@ class RouterHelper extends Helper
 	/**
 	 * Check if the current request is on the specified route name
 	 *
-	 * @param string         $routeName          The name of the route
+	 * @param string         $routes          Array of routes or a string of route
 	 *
 	 * @return bool true if on the specified route, otherwise false 
 	 */
-	public function onRoute($routeName)
+	public function onRoute($routes)
 	{
-		$parameters = $this->matcher->match($this->request->getPathInfo());
-    	
-    	return $parameters['_route'] == $routeName;
+		if(!is_array($routes))
+			$routes = array($routes);
+		
+		$onRoute = false;
+		foreach ($routes as $routeName)
+		{
+			$parameters = $this->matcher->match($this->request->getPathInfo());    	
+    		$onRoute = ($parameters['_route'] == $routeName)?true:$onRoute;
+		}
+		
+		return $onRoute;
 	}
 	
 	/**
