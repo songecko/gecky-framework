@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Generator\UrlGenerator;
 use Gecky\Helper\RouterHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Gecky\Helper\RequestHelper;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class Controller extends ContainerAware
 {
@@ -56,6 +57,12 @@ class Controller extends ContainerAware
 		));
 		
 		return new Response($view);
+	}
+	
+	protected function renderJsonResponse($data)
+	{
+		//TO DO: Hacer más pro.
+		return new JsonResponse($data);
 	}
 	
 	protected function redirect($url)
