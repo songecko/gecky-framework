@@ -2,36 +2,61 @@
 
 namespace Gecky\Database;
 
-use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\ORM\Tools\Setup;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\Driver\YamlDriver;
+use Doctrine\ORM\Configuration;
+use Doctrine\ORM\Mapping\Driver\SimplifiedYamlDriver;
 
 class Db {
 	
 	protected $config;
-	private $connection;
+	protected $entityNamespaces;
+	protected $entityManager;
 	
 	public function __construct($config)
 	{
 		$this->config = $config;
+		$this->entityNamespaces = array();
+	}
+	
+	public function addEntityNamespace($namespace)
+	{
+		$this->entityNamespaces = array_merge($this->entityNamespaces, $namespace);
+	}
+	
+	public function setEntityManager($debug = false)
+	{
+		$paths = array_keys($this->entityNamespaces);
+			
+		// the connection configuration
+		$dbParams = array(
+			'driver'   => 'pdo_mysql',
+			'host' => $this->config['host'],
+			'user'     => $this->config['username'],
+			'password' => $this->config['password'],
+			'dbname'   => $this->config['database'],
+			'charset' => 'utf8'
+		);
+		
+		$config = Setup::createYAMLMetadataConfiguration($paths, $debug);
+		$driver = new SimplifiedYamlDriver($this->entityNamespaces);
+		$config->setMetadataDriverImpl($driver);
+			
+		$this->entityManager = EntityManager::create($dbParams, $config);
 	}
 	
 	/**
-	 * @return Doctrine\DBAL\Connection
+	 * @return EntityManager
 	 */
-	public function getConnection()
+	public function getEntityManager()
 	{
-		if(!$this->connection)
+		if(!$this->entityManager)
 		{
-			$this->connection = DriverManager::getConnection(array(
-				'dbname' => $this->config['database'],
-				'user' => $this->config['username'],
-				'password' => $this->config['password'],
-				'host' => $this->config['host'],
-				'driver' => 'pdo_mysql',
-				'charset' => 'utf8'
-			)); 
+			$this->setEntityManager();
 		}
 		
-		return $this->connection;
+		return $this->entityManager;
 	}
 }

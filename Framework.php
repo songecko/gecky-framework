@@ -14,7 +14,8 @@ use Symfony\Component\HttpFoundation\Session\Session;
  
 class Framework extends HttpKernel
 {
-	//public function __construct(EventDispatcherInterface $dispatcher, ControllerResolverInterface $resolver, $debug = false)
+	public $container;
+	
 	public function __construct($debug = false)
 	{					
 		if ($debug)
@@ -36,6 +37,11 @@ class Framework extends HttpKernel
 		$loader = new DIYamlLoader($container, new FileLocator('config/'));
 		$loader->load('parameters.yml');
 		$loader->load('services.yml');
+		
+		//Load doctrine entities
+		$container->get('database')->setEntityManager($debug);
+		
+		$this->container = $container;
 		
 		return parent::__construct($container->get('dispatcher'), $container->get('resolver'));
 	}
