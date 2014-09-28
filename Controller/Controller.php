@@ -75,6 +75,11 @@ class Controller extends ContainerAware
 		return $this->container->get('routing.generator')->generate($routeName, $parameters, $referenceType);
 	}
 	
+	protected function get($serviceId)
+	{
+		return $this->container->get($serviceId);
+	}
+
 	protected function getViewsDir()
 	{
 		//Must implement getViewsDir() to use the templating engine
