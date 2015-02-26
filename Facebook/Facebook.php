@@ -2,33 +2,25 @@
 
 namespace Gecky\Facebook;
 
-class Facebook extends \Facebook
+use Facebook\FacebookSession;
+use Facebook\FacebookRedirectLoginHelper;
+use Facebook\FacebookRequestException;
+use Facebook\FacebookRequest;
+use Facebook\FacebookPageTabHelper;
+
+class Facebook
 {	
 	protected $appHost;
 	protected $tabUrl;
 	protected $loginScope;
 	
-	public function init($appHost, $tabUrl, $loginScope = 'basic_info, email, user_birthday') 
+	public function __construct($appId, $appSecret, $appHost, $tabUrl, $loginScope = 'basic_info, email, user_birthday') 
 	{
 		$this->appHost = $appHost;
 		$this->tabUrl = $tabUrl;
 		$this->loginScope = $loginScope;
 		
-		//Tomo el access token desde el redirect de facebook
-		$access_token = isset($_SESSION['fb_access_token'])?$_SESSION['fb_access_token']:null;
-		if ($code = isset($_REQUEST["code"])?$_REQUEST["code"]:false)
-		{
-			$token_url="https://graph.facebook.com/oauth/access_token?client_id=".$this->getAppId()."&redirect_uri=" . urlencode($this->getAppHost())
-			. "&client_secret=".$this->getAppSecret()."&code=" . $code . "&display=popup";
-			$response = @file_get_contents($token_url);
-			if($response)
-			{
-				$params = null;
-				parse_str($response, $params);
-				$access_token = $_SESSION['fb_access_token'] =  $params['access_token'];
-			}
-		}
-		$this->setAccessToken($access_token);
+		FacebookSession::setDefaultApplication($appId, $appSecret);
 	}
 	
 	public function getAppHost()
@@ -43,9 +35,76 @@ class Facebook extends \Facebook
 	
 	public function getConfiguredLoginUrl()
 	{
-		return $this->getLoginUrl(array(
-			'scope' => $this->loginScope,
-			'redirect_uri' => $this->appHost
-		));
+		$helper = new FacebookRedirectLoginHelper($this->appHost);
+		return $helper->getLoginUrl($this->loginScope);
+	}
+	
+	public function getUserId()
+	{
+		try {
+			$session = $this->getFacebookSession();
+			if($session)
+			{
+				return $session->getSessionInfo()->asArray()['user_id'];
+			}
+		} catch(\Exception $ex) {
+			//echo $ex->getMessage();
+		}	
+		
+		return null;
+	}
+	
+	public function api($path, $method, $parameters = null)
+	{
+		try {
+			$session = $this->getFacebookSession();
+			
+			$request = new FacebookRequest($session, 'GET', '/me', $parameters);
+			$response = $request->execute();
+			$graphObject = $response->getGraphObject();
+			
+			return $graphObject->asArray();
+		} catch(FacebookRequestException $ex) {
+			// When Facebook returns an error
+			throw $ex;
+		} catch(\Exception $ex) {
+			// When validation fails or other local issues
+			throw $ex;
+		}
+	}
+	
+	public function isOnPageTab()
+	{
+		$tabHelper = new FacebookPageTabHelper();
+		
+		return $tabHelper->getPageId();
+	}
+	
+	public function getFacebookSession()
+	{
+		$helper = new FacebookRedirectLoginHelper($this->appHost);
+		$session = null;
+				
+		try 
+		{
+			$session = $helper->getSessionFromRedirect();
+			if(!$session && isset($_SESSION['myfb_access_token']))
+			{
+				$session = new FacebookSession($_SESSION['myfb_access_token']);
+			}
+		} catch(FacebookRequestException $ex) {
+			// When Facebook returns an error
+			throw $ex;
+		} catch(\Exception $ex) {
+			// When validation fails or other local issues
+			throw $ex;
+		}
+		
+		if($session)
+		{
+			$_SESSION['myfb_access_token'] = $session->getToken();
+		}
+		
+		return $session;
 	}
 }
