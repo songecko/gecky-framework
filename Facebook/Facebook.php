@@ -7,6 +7,7 @@ use Facebook\FacebookRedirectLoginHelper;
 use Facebook\FacebookRequestException;
 use Facebook\FacebookRequest;
 use Facebook\FacebookPageTabHelper;
+use Facebook\FacebookJavaScriptLoginHelper;
 
 class Facebook
 {	
@@ -59,16 +60,12 @@ class Facebook
 		try {
 			$session = $this->getFacebookSession();
 			
-			$request = new FacebookRequest($session, 'GET', '/me', $parameters);
+			$request = new FacebookRequest($session, $method, $path, $parameters);
 			$response = $request->execute();
 			$graphObject = $response->getGraphObject();
 			
 			return $graphObject->asArray();
 		} catch(FacebookRequestException $ex) {
-			// When Facebook returns an error
-			throw $ex;
-		} catch(\Exception $ex) {
-			// When validation fails or other local issues
 			throw $ex;
 		}
 	}
@@ -83,6 +80,8 @@ class Facebook
 	public function getFacebookSession()
 	{
 		$helper = new FacebookRedirectLoginHelper($this->appHost);
+		$helperJavascript = new FacebookJavaScriptLoginHelper();
+		
 		$session = null;
 				
 		try 
@@ -92,10 +91,12 @@ class Facebook
 			{
 				$session = new FacebookSession($_SESSION['myfb_access_token']);
 			}
-		} catch(FacebookRequestException $ex) {
-			// When Facebook returns an error
-			throw $ex;
-		} catch(\Exception $ex) {
+			
+			if(!$session || !$session->getAccessToken()->isValid())
+			{
+				$session = $helperJavascript->getSession();
+			}
+		} catch(\Exception $ex) {				
 			// When validation fails or other local issues
 			throw $ex;
 		}
